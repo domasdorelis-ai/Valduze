@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="lt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Interaktyvi Klausimų Svetainė — Meilės Testas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Playfair+Display:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#071427;--card:#081422;--accent:#ff6b9a;--muted:#9fb0c8;--glass:rgba(255,255,255,0.03);}
+    *{box-sizing:border-box;font-family:Inter,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial;}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#031423 0%, #071427 70%);color:#e6eef8;overflow-x:hidden;transition:background 0.6s;}
+
+    .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:36px;transition:opacity 0.6s;}
+    .card{width:100%;max-width:980px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:18px;padding:22px;box-shadow:0 12px 40px rgba(2,6,23,0.6);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.03);transition:opacity 0.6s;}
+    .header{display:flex;align-items:center;gap:16px}
+    .logo{width:64px;height:64px;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--accent),#06b6d4)}
+    .logo img{width:100%;height:100%;object-fit:cover}
+    h1{margin:0;font-size:20px}
+    p.lead{margin:6px 0 0;color:var(--muted);font-size:14px}
+    .main{display:grid;grid-template-columns:1fr 340px;gap:20px;margin-top:18px;transition:opacity 0.6s;}
+    @media(max-width:920px){.main{grid-template-columns:1fr}}
+    .quiz{background:var(--card);padding:18px;border-radius:12px;min-height:260px;transition:opacity 0.6s;}
+    .question{font-size:18px;margin:0 0 12px}
+    .choices{display:flex;flex-direction:column;gap:10px}
+    .choice{background:var(--glass);padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);cursor:pointer;transition:transform .12s,box-shadow .12s}
+    .choice:hover{transform:translateY(-4px);box-shadow:0 6px 20px rgba(2,6,23,0.5)}
+    .choice.selected{outline:2px solid rgba(255,107,154,0.18)}
+    .status{height:40px;margin-top:12px}
+    .feedback{font-weight:600}
+    .wrong{color:#ff7b7b}
+    .right{color:#7ef89b}
+    .controls{display:flex;gap:10px;align-items:center;margin-top:14px}
+    button{background:linear-gradient(90deg,var(--accent),#ff9776);color:white;border:0;padding:10px 14px;border-radius:10px;font-weight:700;cursor:pointer}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:var(--muted);font-weight:600}
+    .sidebar{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:16px;border-radius:12px}
+    .progress{height:12px;background:rgba(255,255,255,0.03);border-radius:999px;overflow:hidden;margin-top:8px}
+    .progress > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#06b6d4);width:0%;transition:width .45s}
+    .meta{font-size:13px;color:var(--muted);margin-top:8px}
+    .audio-wrap{display:flex;flex-direction:column;gap:10px}
+    .shake{animation:shake .45s}
+    
+    /* End screen */
+    .end-screen {
+      position: fixed;
+      inset:0;
+      background: rgba(10,0,20,0.95);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      opacity:0;
+      pointer-events: none;
+      transition: opacity 1s;
+      padding: 35px;
+      text-align:center;
+      color:#ffd7f1;
+    }
+    .end-screen.show{opacity:1;pointer-events:auto;}
+    .letter{
+      max-width:760px;
+      font-family:"Playfair Display", serif;
+      font-size:20px;
+      line-height:1.8;
+      white-space:pre-line;
+      opacity:0;
+      animation:fadeIn 2s forwards;
+    }
+    @keyframes fadeIn{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+
+    /* Hearts */
+    .heart{position:fixed;color:#ff6fb8;font-size:14px;animation:floatUp 6s linear infinite;opacity:0.6}
+    @keyframes floatUp{0%{transform:translateY(0) scale(1);opacity:0.7}100%{transform:translateY(-180vh) scale(1.4);opacity:0}}
+
+    /* Intro blur */
+    .intro{position:fixed;top:20px;left:50%;transform:translateX(-50%);width:90%;max-width:650px;padding:20px 30px;border-radius:25px;background:rgba(255,100,150,0.12);backdrop-filter:blur(12px);box-shadow:0 0 25px rgba(255,90,140,0.3);transition:opacity 0.6s ease, transform 0.6s ease;z-index:50;text-align:center}
+    .intro.hidden{opacity:0;transform:translate(-50%,-20px);pointer-events:none}
+    .intro h1{margin:0;font-size:24px;font-family:"Playfair Display", serif;color:#ff89c9}
+    .intro p{font-size:14px;opacity:0.8}
+  </style>
+</head>
+<body>
+
+<div class="intro" id="introBox">
+  <h1>Meilės testas 💖</h1>
+  <p>Atsakyk į klausimus ir tęsk kelionę.</p>
+</div>
+
+<div class="wrap" id="quizWrap">
+  <div class="card">
+    <div class="header">
+      <div class="logo" aria-hidden>
+        <img src="/mnt/data/d3a8aed6-e68b-4141-b8fd-fe26b440fe10.png" alt="logo">
+      </div>
+      <div>
+        <h1>Meilės testas</h1>
+        <p class="lead">Atsakyk teisingai — pereini prie kito klausimo. Netinkamai — bandyk dar kartą.</p>
+      </div>
+    </div>
+
+    <div class="main" id="quizContainer">
+      <div class="quiz" id="quizArea">
+        <h2 id="question" class="question">Kraunasi...</h2>
+        <div id="choices" class="choices" role="list"></div>
+        <div class="status"><span id="feedback" class="feedback"></span></div>
+        <div class="controls">
+          <button id="nextBtn" class="ghost" disabled>Kitas klausimas</button>
+          <button id="resetBtn" class="ghost">Pradėti iš pradžių</button>
+        </div>
+      </div>
+
+      <aside class="sidebar">
+        <div class="audio-wrap">
+          <div style="font-weight:700">Muzika</div>
+          <audio id="player" controls>
+            <source src="song.mp3" type="audio/mpeg">
+            Jūsų naršyklė nepalaiko audio elemento.
+          </audio>
+          <div class="meta small">meu.</div>
+        </div>
+
+        <div style="margin-top:18px">
+          <div style="font-weight:700">Progresas</div>
+          <div class="progress" aria-hidden="true"><i id="progBar"></i></div>
+          <div class="meta" id="metaText">0 / 0</div>
+          <div class="meta small" style="margin-top:8px">Sukurta su ❤️</div>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<div class="end-screen" id="endScreen">
+  <div class="sparkles" aria-hidden></div>
+  <div class="letter" id="letter"></div>
+</div>
+
+<script>
+  const questions=[
+    {q:'Kada mes patapome pora?',choices:['lapkricio 18','lapkricio 19','rugsejo 8'],correctIndex:0},
+    {q:'Kodėl kūdikis kartais būna irzlus?',choices:['meu','bombardilo krokodilo','tralalelo tralala'],correctIndex:0},
+    {q:'Ar mūsų istorijos knyga yra dar vis kuriama?',choices:['taip','ne','gal'],correctIndex:0},
+    {q:'Ar skani šiandien pica?',choices:['patapim tralalero','taip','ne'],correctIndex:0},
+    {q:'Ar jautiesi nustebus darydama šį testą?',choices:['Taip, labai net','ne'],correctIndex:0,penaltyRestart:true}
+  ];
+
+  let idx=0;
+  const questionEl=document.getElementById('question');
+  const choicesEl=document.getElementById('choices');
+  const feedbackEl=document.getElementById('feedback');
+  const nextBtn=document.getElementById('nextBtn');
+  const resetBtn=document.getElementById('resetBtn');
+  const progBar=document.getElementById('progBar');
+  const metaText=document.getElementById('metaText');
+  const quizWrap=document.getElementById('quizWrap');
+  const endScreen=document.getElementById('endScreen');
+  const letterEl=document.getElementById('letter');
+
+  function safePercent(c,t){return t<=1?100:Math.round((c/(t-1))*100);}
+  function render(){
+    const cur=questions[idx];
+    questionEl.textContent=cur.q;
+    choicesEl.innerHTML='';
+    feedbackEl.textContent='';
+    nextBtn.disabled=true; nextBtn.classList.remove('ready'); nextBtn.textContent='Kitas klausimas';
+    cur.choices.forEach((c,i)=>{
+      const el=document.createElement('div');
+      el.className='choice'; el.tabIndex=0; el.setAttribute('role','button'); el.setAttribute('aria-pressed','false'); el.textContent=c;
+      el.addEventListener('click',()=>handleChoice(i,el));
+      el.addEventListener('keydown',(e)=>{if(e.key==='Enter'||e.key===' ') handleChoice(i,el);});
+      choicesEl.appendChild(el);
+    });
+    updateProgress();
+  }
+
+  function handleChoice(i,el){
+    const cur=questions[idx]; cur.lastChoiceWrong=false;
+    if(i===cur.correctIndex){
+      feedbackEl.textContent='Teisingai!'; feedbackEl.className='feedback right';
+      Array.from(choicesEl.children).forEach(c=>c.classList.remove('selected')); el.classList.add('selected'); el.setAttribute('aria-pressed','true');
+      nextBtn.disabled=false; nextBtn.classList.add('ready'); if(idx===questions.length-1) nextBtn.textContent='Baigti';
+    } else {
+      feedbackEl.textContent='Neteisingai — bandyk dar kartą.'; feedbackEl.className='feedback wrong'; el.classList.add('shake');
+      setTimeout(()=>el.classList.remove('shake'),450); if(cur.penaltyRestart) cur.lastChoiceWrong=true;
+    }
+  }
+
+  nextBtn.addEventListener('click',()=>{
+    const cur=questions[idx];
+    if(cur.penaltyRestart && cur.lastChoiceWrong){ idx=0; render(); return; }
+    if(idx<questions.length-1){ idx++; render(); } else { showEndScreen(); }
+  });
+  resetBtn.addEventListener('click',()=>{ idx=0; render(); });
+  function updateProgress(){ const p=safePercent(idx,questions.length); progBar.style.width=p+'%'; metaText.textContent=`${idx+1} / ${questions.length}`; }
+
+  function showEndScreen(){
+    quizWrap.style.opacity=0;
+    setTimeout(()=> quizWrap.style.display='none', 600);
+    endScreen.classList.add('show');
+
+    const text=`Labas meile, tikiuosi, kad patiko šis mini testukas, tiesa sakant nugyvenome labai daug jau,
+su manimi išbuvai jau visus 2 metus.
+Esu labai dėkingas, kad viskas taip susiklostė, jog esame kartu.
+
+Labai tave myliu ir laukiu mūsų naujų gyvenimo etapų kartu.
+
+Jau esame antrame etape, gyvename kartu,
+kitas etapas bus po šios kančynės — kai eisime studijuoti ir statysimės į gyvenimą pilnomis jėgomis kartu.
+
+Viso to laukiu, laukiu viso gyvenimo su tavimi, ir esu labai dėkingas, kad jį turiu.
+
+Labai myliu tave, meile.`;
+
+    letterEl.textContent=text;
+
+    const audio=document.getElementById('player');
+    if(audio && audio.paused) audio.play().catch(()=>{});
+  }
+
+  render();
+  window.addEventListener('resize',()=>updateProgress());
+
+  // Blur intro
+  window.addEventListener("scroll",()=>{const intro=document.getElementById("introBox"); window.scrollY>50?intro.classList.add("hidden"):intro.classList.remove("hidden"); });
+
+  // Hearts
+  function createHeart(){const h=document.createElement("div"); h.className="heart"; h.innerHTML="❤"; h.style.left=Math.random()*100+"vw"; h.style.animationDuration=(4+Math.random()*4)+"s"; document.body.appendChild(h); setTimeout(()=>h.remove(),7000);}
+  setInterval(createHeart,800);
+</script>
+
+</body>
+</html>
